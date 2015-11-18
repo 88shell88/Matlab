@@ -33,32 +33,30 @@ for i=0:numInputs*timesMap-1
    map(2,i*inputSize+1)=sin(angulo*i*pi/180);
 end
 
-maxInputY=max(input(:,2));
-maxInputX=max(input(:,1));
-minInputX=min(input(:,1));
-minInputY=min(input(:,2));
+maxInputY=max(input(2,:));
+maxInputX=max(input(1,:));
+minInputX=min(input(1,:));
+minInputY=min(input(2,:));
 
 inputNorm= single(zeros(size(input)));
 
-inputNorm(:,1)=bsxfun(@minus,input(:,1),(minInputX + maxInputX)/2);
-inputNorm(:,1)=bsxfun(@rdivide,inputNorm(:,1)*1.5,(maxInputX - minInputX));
+inputNorm(:,1)=bsxfun(@minus,input(:,1),(minInputX + maxInputX)/2*1,5);
+inputNorm(:,1)=bsxfun(@divide,input(:,1),(maxInputX - minInputX));
 
-inputNorm(:,2)=bsxfun(@minus,input(:,2),(minInputY + maxInputY)/2);
-inputNorm(:,2)=bsxfun(@rdivide,inputNorm(:,2)*1.5,(maxInputY - minInputY));
+inputNorm(:,2)=bsxfun(@minus,input(:,2),(minInputY + maxInputY)/2*1,5);
+inputNorm(:,2)=bsxfun(@divide,input(:,2),(maxInputY - minInputY));
 
-aux = strcat(makeDir,'\input.txt');
-save(aux,'inputNorm');
-aux = strcat(makeDir,'\mapOrig.txt');
-save(aux,'map');
+aux = cell2mat(strcat(makeDir,'\input.txt'))
 
 tic
 hits_d= gpuArray(zeros(1,numInputs));
 map_d= gpuArray(map);
 input_d = gpuArray(inputNorm);
-
+input_d=bsxfun(@plus,input_d,operateTop);
+input_d=bsxfun(@rdivide,input_d,operateBottom);
 for epoch = 1:numEpoch1
     hI=gpuArray(single(zeros(1,numInputs)));
-    
+    input_d(1);
     hR1=bsxfun(@times,weight(1:2:inputSize*numInputs)/2,input_d(1));
     hR2=bsxfun(@times,weight(2:2:inputSize*numInputs)/2,input_d(2));
     hR=bsxfun(@plus,hR1,hR2);
@@ -77,5 +75,3 @@ end
 
 weight=gather(weight_d);
 toc
-aux = strcat(makeDir,'\mapAfter.txt');
-save(aux,'map');
